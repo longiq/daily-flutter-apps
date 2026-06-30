@@ -12,7 +12,7 @@ git init
 git add .
 git commit -m "Khởi tạo: apps + CI"
 git branch -M main
-git remote add origin https://github.com/<tên-bạn>/daily-flutter-apps.git
+git remote add origin https://github.com/longiq/daily-flutter-apps.git
 git push -u origin main
 ```
 
