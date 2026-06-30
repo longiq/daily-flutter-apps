@@ -16,6 +16,9 @@ fi
 cd "$ROOT/$APP"
 echo "▶ Đang chạy: $APP"
 # Sinh thư mục nền tảng nếu chưa có (repo chỉ chứa code thuần)
-[ -d web ] || flutter create --platforms=android,ios,web,macos .
+if [ ! -d web ]; then
+  flutter create --platforms=android,ios,web,macos .
+  rm -f test/widget_test.dart   # bỏ test mẫu do flutter create sinh (tham chiếu MyApp)
+fi
 flutter pub get
 flutter run -d chrome

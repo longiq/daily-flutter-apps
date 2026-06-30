@@ -78,7 +78,10 @@ jobs:
       # Sinh thư mục nền tảng (android/ios/web...) vì repo chỉ có code thuần
       - name: Scaffold platforms
         working-directory: ${{ matrix.path }}
-        run: flutter create --platforms=android,web .
+        run: |
+          flutter create --platforms=android,web .
+          # flutter create sinh kèm test mẫu tham chiếu MyApp (không tồn tại) -> xoá đi
+          rm -f test/widget_test.dart
 
       - name: Get dependencies
         working-directory: ${{ matrix.path }}
@@ -91,7 +94,7 @@ jobs:
       - name: Test
         working-directory: ${{ matrix.path }}
         run: |
-          if [ -d test ]; then flutter test; else echo "Không có test, bỏ qua."; fi
+          if ls test/*.dart >/dev/null 2>&1; then flutter test; else echo "Không có test, bỏ qua."; fi
 
       - name: Build APK (Android)
         working-directory: ${{ matrix.path }}
