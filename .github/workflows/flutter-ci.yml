@@ -1,0 +1,118 @@
+name: Flutter CI
+
+# Tự chạy khi push hoặc mở PR, hoặc bấm tay trong tab Actions.
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  # B1: tự tìm tất cả app Flutter (có pubspec.yaml) trong apps/ và longterm/
+  discover:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set.outputs.matrix }}
+      has_apps: ${{ steps.set.outputs.has_apps }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # cần lịch sử để so sánh thay đổi
+      - id: set
+        run: |
+          all=$(find apps longterm -maxdepth 2 -name pubspec.yaml -exec dirname {} \; 2>/dev/null | sort -u)
+
+          # Xác định các file đã thay đổi tùy theo sự kiện
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            mode="ALL"   # chạy tay -> build tất cả
+          elif [ "${{ github.event_name }}" = "pull_request" ]; then
+            changed=$(git diff --name-only "${{ github.event.pull_request.base.sha }}" "${{ github.sha }}")
+          else
+            before="${{ github.event.before }}"
+            if [ -z "$before" ] || [ "$before" = "0000000000000000000000000000000000000000" ]; then
+              mode="ALL"   # lần push đầu -> build tất cả
+            else
+              changed=$(git diff --name-only "$before" "${{ github.sha }}")
+            fi
+          fi
+
+          # File chung thay đổi -> build tất cả
+          if [ "$mode" != "ALL" ] && echo "$changed" | grep -qE '^\.github/|^\.gitignore'; then
+            mode="ALL"
+          fi
+
+          if [ "$mode" = "ALL" ]; then
+            dirs="$all"
+          else
+            dirs=""
+            for app in $all; do
+              echo "$changed" | grep -q "^$app/" && dirs="$dirs$app"$'\n'
+            done
+          fi
+
+          dirs=$(printf '%s\n' "$dirs" | grep -v '^$' | sort -u)
+          json=$(printf '%s\n' "$dirs" | grep -v '^$' \
+            | jq -R -s -c 'split("\n") | map(select(length>0)) | map({name:(.|split("/")|last), path:.})')
+          [ -z "$json" ] && json="[]"
+          echo "matrix={\"include\":$json}" >> "$GITHUB_OUTPUT"
+          if [ "$json" = "[]" ]; then echo "has_apps=false" >> "$GITHUB_OUTPUT"; else echo "has_apps=true" >> "$GITHUB_OUTPUT"; fi
+          echo "Sẽ build các app:"; printf '%s\n' "$dirs"
+
+  # B2: với mỗi app -> phân tích, test, build APK + web, lưu artifact
+  build:
+    needs: discover
+    if: needs.discover.outputs.has_apps == 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.discover.outputs.matrix) }}
+    name: ${{ matrix.name }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      # Sinh thư mục nền tảng (android/ios/web...) vì repo chỉ có code thuần
+      - name: Scaffold platforms
+        working-directory: ${{ matrix.path }}
+        run: flutter create --platforms=android,web .
+
+      - name: Get dependencies
+        working-directory: ${{ matrix.path }}
+        run: flutter pub get
+
+      - name: Analyze
+        working-directory: ${{ matrix.path }}
+        run: flutter analyze || true   # cảnh báo không chặn build
+
+      - name: Test
+        working-directory: ${{ matrix.path }}
+        run: |
+          if [ -d test ]; then flutter test; else echo "Không có test, bỏ qua."; fi
+
+      - name: Build APK (Android)
+        working-directory: ${{ matrix.path }}
+        run: flutter build apk --release
+
+      - name: Build Web
+        working-directory: ${{ matrix.path }}
+        run: flutter build web --release
+
+      # Tên artifact theo NỀN TẢNG BUILD (app vẫn là Flutter đa nền tảng).
+      # "-android" = bản build Android (file .apk bên trong), KHÔNG phải app chỉ cho Android.
+      - name: Upload Android build
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.name }}-android
+          path: ${{ matrix.path }}/build/app/outputs/flutter-apk/app-release.apk
+          if-no-files-found: warn
+
+      - name: Upload Web build
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.name }}-web
+          path: ${{ matrix.path }}/build/web
+          if-no-files-found: warn
