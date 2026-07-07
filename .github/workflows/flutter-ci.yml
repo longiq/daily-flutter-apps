@@ -119,3 +119,58 @@ jobs:
           name: ${{ matrix.name }}-web
           path: ${{ matrix.path }}/build/web
           if-no-files-found: warn
+
+  # B3: gộp bản web của (các) app vừa build vào GitHub Pages (nhánh gh-pages)
+  # Chỉ ghi đè folder của app vừa build, giữ nguyên app khác đã deploy trước đó.
+  deploy-pages:
+    needs: build
+    if: always() && needs.build.result == 'success'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout gh-pages hiện có (nếu đã tồn tại)
+        uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          path: site
+        continue-on-error: true
+
+      - name: Đảm bảo có thư mục site
+        run: mkdir -p site
+
+      - name: Tải web build vừa tạo trong lần chạy này
+        uses: actions/download-artifact@v4
+        with:
+          pattern: "*-web"
+          path: incoming
+
+      - name: Gộp vào site (chỉ thay app vừa build)
+        run: |
+          shopt -s nullglob
+          for d in incoming/*-web; do
+            name=$(basename "$d")
+            app="${name%-web}"
+            rm -rf "site/$app"
+            mkdir -p "site/$app"
+            cp -r "$d"/* "site/$app"/
+          done
+
+      - name: Sinh trang chủ liệt kê các app
+        run: |
+          {
+            echo "<!doctype html><meta charset=utf-8>"
+            echo "<title>Daily Flutter Apps</title>"
+            echo "<h1>Daily Flutter Apps</h1><ul>"
+            for d in site/*/; do
+              app=$(basename "$d")
+              [ -f "$d/index.html" ] && echo "<li><a href=\"./$app/\">$app</a></li>"
+            done
+            echo "</ul>"
+          } > site/index.html
+
+      - name: Deploy lên gh-pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./site
