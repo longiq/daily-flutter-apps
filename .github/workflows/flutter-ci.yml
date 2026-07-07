@@ -124,7 +124,8 @@ jobs:
   # Chỉ ghi đè folder của app vừa build, giữ nguyên app khác đã deploy trước đó.
   deploy-pages:
     needs: build
-    if: always() && needs.build.result == 'success'
+    # Deploy các app build thành công dù có app khác lỗi (vd: mindvault đang có test fail)
+    if: always() && needs.build.result != 'cancelled' && needs.build.result != 'skipped'
     runs-on: ubuntu-latest
     permissions:
       contents: write
