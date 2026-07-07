@@ -102,7 +102,8 @@ jobs:
 
       - name: Build Web
         working-directory: ${{ matrix.path }}
-        run: flutter build web --release
+        # base-href khớp đường dẫn app trên GitHub Pages (repo/<app>/) để asset load đúng
+        run: flutter build web --release --base-href="/${{ github.event.repository.name }}/${{ matrix.name }}/"
 
       # Tên artifact theo NỀN TẢNG BUILD (app vẫn là Flutter đa nền tảng).
       # "-android" = bản build Android (file .apk bên trong), KHÔNG phải app chỉ cho Android.
