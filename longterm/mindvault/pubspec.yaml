@@ -1,7 +1,7 @@
 name: mindvault
 description: "MindVault - smart notes with local AI Q&A over your own notes."
 publish_to: 'none'
-version: 0.1.0+1
+version: 0.4.0+4
 
 environment:
   sdk: '>=3.0.0 <4.0.0'
@@ -12,11 +12,40 @@ dependencies:
   cupertino_icons: ^1.0.6
   provider: ^6.1.2
   shared_preferences: ^2.2.3
+  http: ^1.2.2
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^3.0.0
+  flutter_launcher_icons: ^0.13.1
+  flutter_native_splash: ^2.4.1
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/icon/
+    - assets/splash/
+
+# Chạy trên Mac mini (sandbox Cowork không có Flutter):
+#   flutter pub get
+#   dart run flutter_launcher_icons
+#   dart run flutter_native_splash:create
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/icon/icon.png"
+  adaptive_icon_background: "#00B894"
+  adaptive_icon_foreground: "assets/icon/icon_foreground.png"
+  remove_alpha_ios: true
+
+flutter_native_splash:
+  color: "#FFFFFF"
+  image: "assets/splash/splash_logo.png"
+  color_dark: "#121212"
+  image_dark: "assets/splash/splash_logo.png"
+  android_12:
+    color: "#FFFFFF"
+    image: "assets/splash/splash_logo.png"
+    color_dark: "#121212"
+    image_dark: "assets/splash/splash_logo.png"

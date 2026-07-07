@@ -49,8 +49,27 @@ class NoteRepository extends ChangeNotifier {
     notifyListeners();
   }
 
-  List<Note> search(String query) =>
-      notes.where((n) => n.matches(query)).toList();
+  /// Tìm kiếm theo [query], có thể kết hợp lọc theo [tags]: ghi chú chỉ
+  /// khớp nếu chứa TẤT CẢ tag trong [tags] (AND) — dùng để thu hẹp dần khi
+  /// người dùng chọn nhiều chip lọc cùng lúc. [tags] rỗng = không lọc.
+  List<Note> search(String query, {Set<String> tags = const {}}) {
+    return notes.where((n) {
+      if (!n.matches(query)) return false;
+      if (tags.isEmpty) return true;
+      final noteTags = n.tags.toSet();
+      return tags.every(noteTags.contains);
+    }).toList();
+  }
+
+  /// Toàn bộ tag đang được dùng trong vault, không trùng lặp, sắp xếp A-Z.
+  List<String> get allTags {
+    final set = <String>{};
+    for (final n in _notes) {
+      set.addAll(n.tags);
+    }
+    final list = set.toList()..sort();
+    return list;
+  }
 
   /// Tạo id đơn giản theo thời gian (đủ dùng cho local, tránh thêm dependency).
   static String newId() =>

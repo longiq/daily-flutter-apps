@@ -39,5 +39,11 @@ Mình không đọc được token trực tiếp → canh bằng quy mô (số f
 | Ngày | Build | Proxy (file / ~dòng) | % thực tế | Ghi chú |
 |------|-------|----------------------|-----------|---------|
 | 2026-06-30 | MindVault M1 | 7 file Dart / ~400 dòng / ~15 ghi file | **< 5%** | Quá nhỏ → cần gấp ~3 lần |
+| 2026-07-01 | Math Sprint | 24 file Dart / ~1757 dòng / ~24 ghi file | _(điền)_ | Đã làm lớn ~3x: 6 màn, provider, prefs, 3 test |
+| 2026-07-02 | MindVault M2+M3 | 16 file mới/đổi / ~1240 dòng / ~16 ghi file | _(điền)_ | Ollama service + offline fallback + mini-RAG (chunk+cosine) + 2 màn mới + 4 test mới |
+| 2026-07-03 | Dream Oracle AI | 20 file Dart / ~1960 dòng / ~24 ghi file | _(điền)_ | App mới: nhật ký giấc mơ + Ollama + offline interpreter (từ điển 40 biểu tượng) + 6 màn + provider + 4 test |
+| 2026-07-04 | MindVault M4 | 10 file mới/đổi / ~954 dòng / ~10 ghi file | _(điền)_ | Tag tự động + lọc: AutoTagger (từ điển 40 chủ đề + tần suất từ, offline) + ollamaSuggest, StopwordsVi, NoteRepository.allTags/search(tags:), TagFilterBar + TagChipInput, nút "Gợi ý tag" ở EditScreen, 2 file test/14 case |
+| 2026-07-06 | Cờ Caro AI | 21 file Dart / ~2030 dòng / ~25 ghi file | _(điền)_ | Game mới: Gomoku 5 quân, 2 người/đấu AI (heuristic pattern-score 4 hướng + nhìn trước 1 nước ở Khó), 3 cỡ bàn, 6 màn, provider, prefs (settings+history), 4 file test/24 case |
+| 2026-07-07 | MindVault M5 | 13 file mới/đổi (2 ảnh PNG) / ~750 dòng / ~13 ghi file | _(điền)_ | UX polish: ThemeSettings (sáng/tối/hệ thống, lưu local) + SegmentedButton trong SettingsScreen; FadeSlideRoute/fadeSlideTo (chuyển màn) + FadeSlideIn (list so le) + AnimatedSwitcher (AskScreen) + AnimatedScale (chip tag, NoteCard press); app icon + splash (PIL, chưa generate — cần Mac mini), 2 file test mới/6 case |
 
 **Mục tiêu hiệu chỉnh:** ~15-20 file hoặc ~1000-1500 dòng code mới/ngày, 4-6 màn hình, 3+ test (≈ gấp 3 lần build M1). Vẫn dừng khi đạt mục tiêu, không lặp vô hạn.
