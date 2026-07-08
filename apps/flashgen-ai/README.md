@@ -1,12 +1,12 @@
 # FlashGen AI 🃏
 
 Dán ghi chú/bài học → AI tự sinh **flashcard** (câu hỏi + đáp án) để học theo kiểu lật thẻ.
-Chạy được **offline** với **Ollama local** (phù hợp môi trường hạn chế mạng nội bộ).
+3 lớp AI: **Cloud AI** (qua proxy, mặc định — không cần cài gì) → **Ollama local** (tùy chọn, dùng khi dev/test hoặc mạng nội bộ hạn chế) → **offline fallback**.
 
 ## Điểm độc đáo
-- Sinh thẻ bằng AI **local** (Ollama) — không gửi dữ liệu lên cloud, dùng được trong mạng nội bộ.
-- Có **fallback offline**: nếu chưa cắm Ollama, app vẫn tạo thẻ cloze đơn giản để không bao giờ "trắng màn hình".
-- Lưu deck bằng SharedPreferences — không cần backend, không cần đăng nhập.
+- Sinh thẻ bằng **Cloud AI** (qua `ai-proxy`, dùng ngay không cần cấu hình) hoặc **Ollama local** nếu bạn muốn chạy hoàn toàn trong mạng nội bộ, không gửi dữ liệu ra ngoài.
+- Có **fallback offline**: nếu cả Cloud AI lẫn Ollama đều không dùng được, app vẫn tạo thẻ cloze đơn giản để không bao giờ "trắng màn hình".
+- Lưu deck bằng SharedPreferences — không cần backend riêng, không cần đăng nhập.
 
 ## Cách kiếm tiền
 | Kênh | Mô tả |
@@ -24,7 +24,15 @@ flutter pub get
 flutter run
 ```
 
-## Cắm Ollama (AI local)
+## Cấu hình Cloud AI
+Mặc định `AiService` đã trỏ sẵn tới `ai-proxy` dùng chung (xem
+`PROJECT_NOTES.md` ở gốc repo) — không cần cấu hình gì, sinh thẻ hoạt động
+ngay cả khi máy không chạy Ollama. App này chưa có màn Cài đặt nên URL/key
+đang hard-code làm default trong constructor của `AiService`
+(`lib/ai_service.dart`) — muốn đổi proxy riêng thì sửa trực tiếp ở đó
+(`cloudUrl`, `cloudKey`, hoặc `useCloud: false` để tắt hẳn Cloud AI).
+
+## Cắm Ollama (AI local, tùy chọn — dùng khi dev/test hoặc mạng nội bộ hạn chế)
 1. Cài Ollama: https://ollama.com
 2. Tải model: `ollama pull llama3.2`
 3. Chạy server: `ollama serve` (mặc định `http://localhost:11434`)
@@ -33,16 +41,18 @@ flutter run
    - **Android emulator**: đổi `baseUrl` thành `http://10.0.2.2:11434`
    - Thiết bị thật: dùng IP máy chạy Ollama, VD `http://192.168.1.10:11434`
 
-> Muốn dùng API cloud (OpenAI/Gemini) thì thay `_callOllama()` bằng request tương ứng và đặt API key qua biến môi trường (đừng hardcode key vào repo).
+Ollama chỉ được dùng khi Cloud AI tắt hoặc gọi proxy thất bại — xem thứ tự
+fallback trong `AiService.generate()`.
 
 ## Cấu trúc
 ```
 lib/
-  main.dart          # App + Home + dialog sinh thẻ (setState)
-  models.dart        # Flashcard, Deck + JSON
-  ai_service.dart    # Gọi Ollama + fallback offline
-  storage.dart       # Lưu/đọc deck (SharedPreferences)
-  study_screen.dart  # Màn học: lật thẻ, vuốt qua thẻ
+  main.dart              # App + Home + dialog sinh thẻ (setState)
+  models.dart            # Flashcard, Deck + JSON
+  ai_service.dart        # Cloud AI -> Ollama -> fallback offline
+  cloud_ai_service.dart  # Gọi ai-proxy (Cloud AI)
+  storage.dart           # Lưu/đọc deck (SharedPreferences)
+  study_screen.dart      # Màn học: lật thẻ, vuốt qua thẻ
 ```
 
 ## Kiểm tra code
@@ -57,7 +67,9 @@ flutter test   # nếu thêm test
 - [ ] **App icon** đủ kích thước (dùng `flutter_launcher_icons`)
 - [ ] **Splash screen** (`flutter_native_splash`)
 - [ ] **Screenshots**: Android (phone + tablet), iOS (6.7" + 5.5")
-- [ ] **Privacy Policy** URL (bắt buộc — app dùng lưu trữ cục bộ, ghi rõ "không thu thập dữ liệu")
+- [ ] **Privacy Policy** URL (bắt buộc — deck lưu cục bộ, nhưng nêu rõ nội
+      dung ghi chú người dùng dán vào được gửi tới proxy AI/Gemini (mặc
+      định) hoặc Ollama local để sinh flashcard)
 - [ ] **App signing**: Android tạo keystore + `key.properties`; iOS cấu hình signing trong Xcode
 - [ ] `applicationId` / `bundleId` riêng (vd `com.longiq.flashgenai`)
 - [ ] Tăng `version` trong `pubspec.yaml`
