@@ -16,8 +16,33 @@
 ```
 ClaudeCreateApp/
 ├── apps/        ← app nhỏ T2/4/6 (chỉ tên app, vd odd-color-tap/; ngày lưu ở INDEX.md)
-└── longterm/    ← app dài hạn T3/5/7 (vd mindvault/)
+├── longterm/    ← app dài hạn T3/5/7 (vd mindvault/)
+└── backend/     ← ai-proxy (backend chung, xem mục "AI backend chung" bên dưới)
 ```
+
+## AI backend chung (ai-proxy) — thêm 2026-07-08
+Ollama local chỉ tiện cho lúc **dev/test trên Mac mini** — người dùng thật
+cài app từ store sẽ KHÔNG có Ollama chạy sẵn. Để app AI hoạt động ngay cả
+với người dùng thật mà không lộ API key trong file build, dùng backend
+proxy nhỏ deploy free trên Render:
+
+- **Vị trí:** `backend/ai-proxy/` (Node/Express, gọi Gemini API free tier
+  ~1.500 request/ngày, key giữ ở server qua env var `GEMINI_API_KEY`).
+- **Cách deploy:** xem `backend/ai-proxy/README.md` (deploy từ GitHub repo
+  đã có sẵn qua `AUTO_PUSH.md`, root directory `backend/ai-proxy`).
+- **Client mẫu cho Flutter:** `backend/flutter-client-template/` — copy
+  `cloud_ai_service.dart` vào từng app + làm theo hướng dẫn trong README ở
+  đó để chuyển từ 2 lớp (Ollama → offline) sang **3 lớp**:
+  `CloudAiService (qua proxy) → OllamaService (local, dev) → Offline (rule-based, luôn có)`.
+- **Trạng thái áp dụng:** mới tạo backend + template, **CHƯA sửa** vào các
+  app đã build (Dream Oracle AI, MindVault, FlashGen AI, Cờ Caro AI,
+  BudgetWise AI) — sẽ áp dụng dần khi build/nâng cấp từng app.
+- **Quy ước cho app AI mới (task `daily-flutter-app`):** từ app AI tiếp
+  theo, tạo `CloudAiService` ngay từ đầu theo template thay vì chỉ 2 lớp
+  Ollama+offline như trước đây (đọc `backend/flutter-client-template/README.md`
+  trước khi build).
+- URL proxy thật (sau khi user deploy trên Render) cần được user điền vào
+  đây để các lần build sau biết dùng: **`(điền URL Render vào đây sau khi deploy)`**
 
 ## Lệnh test nhanh trên Mac mini
 ```bash
@@ -45,5 +70,6 @@ Mình không đọc được token trực tiếp → canh bằng quy mô (số f
 | 2026-07-04 | MindVault M4 | 10 file mới/đổi / ~954 dòng / ~10 ghi file | _(điền)_ | Tag tự động + lọc: AutoTagger (từ điển 40 chủ đề + tần suất từ, offline) + ollamaSuggest, StopwordsVi, NoteRepository.allTags/search(tags:), TagFilterBar + TagChipInput, nút "Gợi ý tag" ở EditScreen, 2 file test/14 case |
 | 2026-07-06 | Cờ Caro AI | 21 file Dart / ~2030 dòng / ~25 ghi file | _(điền)_ | Game mới: Gomoku 5 quân, 2 người/đấu AI (heuristic pattern-score 4 hướng + nhìn trước 1 nước ở Khó), 3 cỡ bàn, 6 màn, provider, prefs (settings+history), 4 file test/24 case |
 | 2026-07-07 | MindVault M5 | 13 file mới/đổi (2 ảnh PNG) / ~750 dòng / ~13 ghi file | _(điền)_ | UX polish: ThemeSettings (sáng/tối/hệ thống, lưu local) + SegmentedButton trong SettingsScreen; FadeSlideRoute/fadeSlideTo (chuyển màn) + FadeSlideIn (list so le) + AnimatedSwitcher (AskScreen) + AnimatedScale (chip tag, NoteCard press); app icon + splash (PIL, chưa generate — cần Mac mini), 2 file test mới/6 case |
+| 2026-07-08 | BudgetWise AI | 25 file Dart (lib) + 4 test / ~2830 dòng / ~29 ghi file | _(điền)_ | App mới: quản lý thu chi cá nhân, danh mục cố định (8 chi + 4 thu), TransactionProvider (CRUD + tổng hợp theo tháng), BudgetRepository + BudgetProgressBar cảnh báo vượt hạn mức, OfflineInsights (5 loại nhận xét quy tắc, luôn offline) + OllamaService phân tích chuyên sâu (giới hạn 3 lượt free/tháng, Premium mô phỏng), RootShell bottom-nav 4 tab + màn Cài đặt riêng, 6 màn hình, 4 file test/20 case |
 
 **Mục tiêu hiệu chỉnh:** ~15-20 file hoặc ~1000-1500 dòng code mới/ngày, 4-6 màn hình, 3+ test (≈ gấp 3 lần build M1). Vẫn dừng khi đạt mục tiêu, không lặp vô hạn.

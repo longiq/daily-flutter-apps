@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ô Ăn Quan</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app">
+    <header>
+      <h1>Ô Ăn Quan</h1>
+      <div class="scoreboard">
+        <div class="score score-ai">
+          <span class="label">Máy (trên)</span>
+          <span class="value" id="scoreAI">0</span>
+        </div>
+        <div class="turn-indicator" id="turnIndicator">Lượt của bạn</div>
+        <div class="score score-player">
+          <span class="label">Bạn (dưới)</span>
+          <span class="value" id="scorePlayer">0</span>
+        </div>
+      </div>
+    </header>
+
+    <div class="board-wrap">
+      <div class="board" id="board"></div>
+      <div class="direction-popup hidden" id="directionPopup">
+        <button data-dir="-1">◀ Rải trái</button>
+        <button data-dir="1">Rải phải ▶</button>
+      </div>
+    </div>
+
+    <div class="log-panel">
+      <div class="log" id="log"></div>
+    </div>
+
+    <div class="controls">
+      <label for="difficulty">Độ khó AI:</label>
+      <select id="difficulty">
+        <option value="easy">Dễ</option>
+        <option value="medium" selected>Trung bình</option>
+        <option value="hard">Khó</option>
+      </select>
+      <button id="newGameBtn">Ván mới</button>
+      <button id="rulesBtn">Luật chơi</button>
+    </div>
+
+    <div class="modal hidden" id="rulesModal">
+      <div class="modal-content">
+        <h2>Luật chơi (bản đơn giản hoá cho web)</h2>
+        <ul>
+          <li>Bàn cờ gồm 10 ô dân (mỗi bên 5 ô, ban đầu 5 quân/ô) và 2 ô quan ở hai đầu (ban đầu 10 quân/ô).</li>
+          <li>Đến lượt, chọn 1 ô dân của mình đang có quân, chọn rải trái hoặc rải phải.</li>
+          <li>Rải mỗi ô 1 quân quanh vòng. Nếu quân cuối rơi vào ô đang có quân, bốc hết ô đó rải tiếp. Nếu rơi vào ô trống thì dừng.</li>
+          <li>Khi dừng ở ô trống, nếu ô kế tiếp theo chiều rải có quân (không phải ô dân của chính mình) thì được ăn hết quân ở đó, rồi xét tiếp ô sau nữa; ăn liên tục cho đến khi gặp ô trống hoặc ô dân của chính mình.</li>
+          <li>Ô quan bị ăn hết sẽ "chết" vĩnh viễn (bỏ qua khi rải quân phần còn lại của ván).</li>
+          <li>Hết quân ở cả 5 ô dân của một bên khi đến lượt đi thì ván kết thúc; quân còn lại trên bàn được cộng cho chủ ô. Ai tổng điểm cao hơn thắng.</li>
+        </ul>
+        <button id="closeRules">Đóng</button>
+      </div>
+    </div>
+
+    <div class="modal hidden" id="gameOverModal">
+      <div class="modal-content">
+        <h2 id="gameOverTitle">Kết thúc ván</h2>
+        <p id="gameOverText"></p>
+        <button id="playAgainBtn">Chơi ván mới</button>
+      </div>
+    </div>
+  </div>
+
+<script src="script.js"></script>
+</body>
+</html>

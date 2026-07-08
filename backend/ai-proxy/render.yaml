@@ -1,0 +1,21 @@
+# Render Blueprint — cho phép deploy bằng "New + > Blueprint" trên Render
+# và trỏ vào thư mục backend/ai-proxy này (hoặc deploy thủ công theo README.md).
+services:
+  - type: web
+    name: ai-proxy
+    runtime: node
+    plan: free
+    rootDir: backend/ai-proxy
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: GEMINI_MODEL
+        value: gemini-2.5-flash
+      - key: PROXY_SECRET
+        sync: false
+      - key: ALLOWED_ORIGINS
+        value: "*"
+      - key: RATE_LIMIT_MAX
+        value: "30"
