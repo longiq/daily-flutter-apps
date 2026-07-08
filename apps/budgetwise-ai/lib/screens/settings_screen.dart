@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/settings_provider.dart';
 import '../providers/transaction_provider.dart';
+import '../services/cloud_ai_service.dart';
 import '../services/ollama_service.dart';
 
 /// Cài đặt: giao diện, cấu hình Ollama, Premium (mô phỏng mua hàng),
@@ -16,8 +17,12 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen> {
   late TextEditingController _hostController;
   late TextEditingController _modelController;
+  late TextEditingController _cloudUrlController;
+  late TextEditingController _cloudKeyController;
   bool? _testResult;
   bool _testing = false;
+  bool? _cloudTestResult;
+  bool _testingCloud = false;
 
   @override
   void initState() {
@@ -25,13 +30,46 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final settings = context.read<SettingsProvider>();
     _hostController = TextEditingController(text: settings.ollamaHost);
     _modelController = TextEditingController(text: settings.ollamaModel);
+    _cloudUrlController = TextEditingController(text: settings.cloudUrl);
+    _cloudKeyController = TextEditingController(text: settings.cloudKey);
   }
 
   @override
   void dispose() {
     _hostController.dispose();
     _modelController.dispose();
+    _cloudUrlController.dispose();
+    _cloudKeyController.dispose();
     super.dispose();
+  }
+
+  Future<void> _saveCloudConfig(SettingsProvider settings, {bool? enabled}) async {
+    await settings.setCloudConfig(
+      url: _cloudUrlController.text,
+      key: _cloudKeyController.text,
+      enabled: enabled ?? settings.useCloud,
+    );
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Đã lưu cấu hình Cloud AI')),
+      );
+    }
+  }
+
+  Future<void> _testCloudConnection() async {
+    setState(() {
+      _testingCloud = true;
+      _cloudTestResult = null;
+    });
+    final ok = await CloudAiService(
+      baseUrl: _cloudUrlController.text.trim(),
+      proxyKey: _cloudKeyController.text.trim(),
+    ).testConnection();
+    if (!mounted) return;
+    setState(() {
+      _testingCloud = false;
+      _cloudTestResult = ok;
+    });
   }
 
   Future<void> _saveOllamaConfig(SettingsProvider settings) async {
@@ -133,6 +171,70 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
               ),
               const Divider(height: 32),
+              _SectionTitle('Cloud AI (proxy)'),
+              Text(
+                'Dùng chung server proxy (ai-proxy) — không cần cài gì, hoạt '
+                'động ngay cả khi máy không chạy Ollama. Ưu tiên dùng trước '
+                'Ollama, không tính vào giới hạn lượt miễn phí ở trên.',
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+              const SizedBox(height: 8),
+              SwitchListTile(
+                contentPadding: EdgeInsets.zero,
+                title: const Text('Bật Cloud AI'),
+                value: settings.useCloud,
+                onChanged: (v) => _saveCloudConfig(settings, enabled: v),
+              ),
+              const SizedBox(height: 8),
+              TextField(
+                controller: _cloudUrlController,
+                decoration: const InputDecoration(labelText: 'Proxy URL'),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _cloudKeyController,
+                decoration:
+                    const InputDecoration(labelText: 'Proxy key (x-proxy-key)'),
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => _saveCloudConfig(settings),
+                      child: const Text('Lưu'),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: FilledButton(
+                      onPressed: _testingCloud ? null : _testCloudConnection,
+                      child: _testingCloud
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Text('Kiểm tra kết nối'),
+                    ),
+                  ),
+                ],
+              ),
+              if (_cloudTestResult != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: Text(
+                    _cloudTestResult!
+                        ? 'Kết nối Cloud AI thành công!'
+                        : 'Không kết nối được proxy — kiểm tra URL/key.',
+                    style: TextStyle(
+                      color: _cloudTestResult!
+                          ? const Color(0xFF00B894)
+                          : Theme.of(context).colorScheme.error,
+                    ),
+                  ),
+                ),
+              const Divider(height: 32),
               _SectionTitle('Ollama (AI local)'),
               SwitchListTile(
                 contentPadding: EdgeInsets.zero,
@@ -218,9 +320,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 leading: Icon(Icons.info_outline),
                 title: Text('BudgetWise AI v1.0.0'),
                 subtitle: Text(
-                  'Quản lý thu chi cá nhân + AI phân tích chi tiêu qua Ollama '
-                  'local. Dữ liệu lưu hoàn toàn trên máy, không gửi lên server '
-                  'nào ngoài Ollama do bạn tự cấu hình.',
+                  'Quản lý thu chi cá nhân + AI phân tích chi tiêu qua Cloud AI '
+                  '(proxy) hoặc Ollama local. Dữ liệu giao dịch lưu hoàn toàn '
+                  'trên máy, chỉ nội dung phân tích được gửi tới AI khi bạn '
+                  'bấm "Phân tích ngay".',
                 ),
               ),
             ],

@@ -20,11 +20,8 @@ class OllamaService {
     this.model = 'llama3.2',
   });
 
-  /// [summary] là bản tóm tắt số liệu chi tiêu tháng (đã tính sẵn ở
-  /// OfflineInsights/TransactionProvider) để AI phân tích và đưa lời khuyên.
-  Future<String?> analyzeSpending(String summary) async {
-    try {
-      final prompt = '''
+  /// Prompt phân tích chi tiêu dùng chung cho OllamaService và CloudAiService.
+  static String buildPrompt(String summary) => '''
 Bạn là một cố vấn tài chính cá nhân am hiểu, nói tiếng Việt, giọng điệu thân
 thiện và thực tế (không giáo điều).
 Dưới đây là số liệu thu chi tháng này của người dùng:
@@ -38,6 +35,12 @@ Hãy:
 Trả lời bằng tiếng Việt, súc tích, dưới 180 từ, không dùng markdown, không
 dùng gạch đầu dòng ký hiệu đặc biệt (dùng số 1. 2. 3. bình thường).
 ''';
+
+  /// [summary] là bản tóm tắt số liệu chi tiêu tháng (đã tính sẵn ở
+  /// OfflineInsights/TransactionProvider) để AI phân tích và đưa lời khuyên.
+  Future<String?> analyzeSpending(String summary) async {
+    try {
+      final prompt = buildPrompt(summary);
 
       final res = await http
           .post(

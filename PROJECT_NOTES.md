@@ -34,15 +34,17 @@ proxy nhỏ deploy free trên Render:
   `cloud_ai_service.dart` vào từng app + làm theo hướng dẫn trong README ở
   đó để chuyển từ 2 lớp (Ollama → offline) sang **3 lớp**:
   `CloudAiService (qua proxy) → OllamaService (local, dev) → Offline (rule-based, luôn có)`.
-- **Trạng thái áp dụng:** mới tạo backend + template, **CHƯA sửa** vào các
-  app đã build (Dream Oracle AI, MindVault, FlashGen AI, Cờ Caro AI,
-  BudgetWise AI) — sẽ áp dụng dần khi build/nâng cấp từng app.
+- **Trạng thái áp dụng (cập nhật 2026-07-08):** đã sửa 3 lớp vào **Dream
+  Oracle AI, BudgetWise AI, FlashGen AI** (dùng chung `PROXY_SECRET` nhúng
+  trong code — chấp nhận được vì đây không phải secret cấp cao, xem README
+  ai-proxy). **CHƯA sửa** MindVault, Cờ Caro AI — áp dụng dần khi
+  build/nâng cấp.
 - **Quy ước cho app AI mới (task `daily-flutter-app`):** từ app AI tiếp
   theo, tạo `CloudAiService` ngay từ đầu theo template thay vì chỉ 2 lớp
   Ollama+offline như trước đây (đọc `backend/flutter-client-template/README.md`
   trước khi build).
-- URL proxy thật (sau khi user deploy trên Render) cần được user điền vào
-  đây để các lần build sau biết dùng: **`(điền URL Render vào đây sau khi deploy)`**
+- URL proxy thật (đã deploy trên Render 2026-07-08): **`https://ai-proxy-2f7q.onrender.com`**
+  (health check: `GET /health`, gọi thật: `POST /api/generate` kèm header `x-proxy-key`).
 
 ## Lệnh test nhanh trên Mac mini
 ```bash

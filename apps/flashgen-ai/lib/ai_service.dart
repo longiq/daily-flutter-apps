@@ -1,8 +1,10 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'cloud_ai_service.dart';
 import 'models.dart';
 
-/// Dịch vụ sinh flashcard. Mặc định gọi Ollama chạy local.
+/// Dịch vụ sinh flashcard. Thử Cloud AI (proxy, xem PROJECT_NOTES.md) trước,
+/// rồi Ollama local, rồi fallback offline.
 ///
 /// Cắm Ollama:
 ///   1) Cài Ollama: https://ollama.com  -> `ollama pull llama3.2`
@@ -12,24 +14,21 @@ class AiService {
   /// localhost cho iOS sim / desktop; 10.0.2.2 cho Android emulator.
   final String baseUrl;
   final String model;
+  final String cloudUrl;
+  final String cloudKey;
+  final bool useCloud;
 
   AiService({
     this.baseUrl = 'http://localhost:11434',
     this.model = 'llama3.2',
+    // ai-proxy đã deploy trên Render (xem PROJECT_NOTES.md) — dùng làm lớp
+    // AI chính, không cần người dùng thật cài Ollama.
+    this.cloudUrl = 'https://ai-proxy-2f7q.onrender.com',
+    this.cloudKey = '8e34b4144c818525228575f447ece54d',
+    this.useCloud = true,
   });
 
-  /// Gọi Ollama sinh flashcard từ [text]. Nếu lỗi mạng/không có Ollama,
-  /// tự fallback sang bộ tạo offline đơn giản để app luôn chạy được.
-  Future<List<Flashcard>> generate(String text, {int count = 8}) async {
-    try {
-      return await _callOllama(text, count);
-    } catch (_) {
-      return _offlineFallback(text, count);
-    }
-  }
-
-  Future<List<Flashcard>> _callOllama(String text, int count) async {
-    final prompt = '''
+  static String _buildPrompt(String text, int count) => '''
 Bạn là trợ lý tạo flashcard học tập. Dựa vào nội dung dưới đây, tạo $count thẻ
 gồm câu hỏi (q) và câu trả lời (a) ngắn gọn. Chỉ trả về JSON hợp lệ dạng:
 [{"q":"...","a":"..."}]
@@ -38,6 +37,31 @@ Không thêm giải thích.
 Nội dung:
 $text
 ''';
+
+  /// Sinh flashcard từ [text]: thử Cloud AI trước, rồi Ollama, rồi fallback
+  /// offline nếu cả hai đều lỗi/không có mạng.
+  Future<List<Flashcard>> generate(String text, {int count = 8}) async {
+    if (useCloud && cloudUrl.isNotEmpty) {
+      try {
+        final cloud = CloudAiService(baseUrl: cloudUrl, proxyKey: cloudKey);
+        final raw = await cloud.generate(_buildPrompt(text, count));
+        if (raw != null) {
+          final cards = _parseCards(raw);
+          if (cards.isNotEmpty) return cards;
+        }
+      } catch (_) {
+        // rơi xuống thử Ollama.
+      }
+    }
+    try {
+      return await _callOllama(text, count);
+    } catch (_) {
+      return _offlineFallback(text, count);
+    }
+  }
+
+  Future<List<Flashcard>> _callOllama(String text, int count) async {
+    final prompt = _buildPrompt(text, count);
 
     final res = await http
         .post(

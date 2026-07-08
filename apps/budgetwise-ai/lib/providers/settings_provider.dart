@@ -10,6 +10,9 @@ class SettingsProvider extends ChangeNotifier {
   static const _kOllamaEnabled = 'bw_ollama_enabled';
   static const _kPremium = 'bw_premium';
   static const _kAiUsesMonth = 'bw_ai_uses_month'; // "yyyy-MM:count"
+  static const _kCloudUrl = 'bw_cloud_url';
+  static const _kCloudKey = 'bw_cloud_key';
+  static const _kUseCloud = 'bw_use_cloud';
 
   static const int freeAiLimitPerMonth = 3;
 
@@ -19,6 +22,12 @@ class SettingsProvider extends ChangeNotifier {
   bool ollamaEnabled = true;
   bool isPremium = false;
   String _aiUsesRaw = '';
+
+  // ai-proxy đã deploy trên Render (xem PROJECT_NOTES.md) — dùng làm lớp AI
+  // chính, không cần người dùng thật cài Ollama.
+  String cloudUrl = 'https://ai-proxy-2f7q.onrender.com';
+  String cloudKey = '8e34b4144c818525228575f447ece54d';
+  bool useCloud = true;
 
   bool _loaded = false;
   bool get loaded => _loaded;
@@ -31,8 +40,26 @@ class SettingsProvider extends ChangeNotifier {
     ollamaEnabled = prefs.getBool(_kOllamaEnabled) ?? true;
     isPremium = prefs.getBool(_kPremium) ?? false;
     _aiUsesRaw = prefs.getString(_kAiUsesMonth) ?? '';
+    cloudUrl = prefs.getString(_kCloudUrl) ?? cloudUrl;
+    cloudKey = prefs.getString(_kCloudKey) ?? cloudKey;
+    useCloud = prefs.getBool(_kUseCloud) ?? useCloud;
     _loaded = true;
     notifyListeners();
+  }
+
+  Future<void> setCloudConfig({
+    required String url,
+    required String key,
+    required bool enabled,
+  }) async {
+    cloudUrl = url.trim().isEmpty ? cloudUrl : url.trim();
+    cloudKey = key.trim();
+    useCloud = enabled;
+    notifyListeners();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_kCloudUrl, cloudUrl);
+    await prefs.setString(_kCloudKey, cloudKey);
+    await prefs.setBool(_kUseCloud, useCloud);
   }
 
   Future<void> setDarkMode(bool value) async {

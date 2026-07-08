@@ -33,6 +33,9 @@ class _InterpretationScreenState extends State<InterpretationScreen> {
           host: settings.host,
           model: settings.model,
           forceOffline: settings.forceOffline,
+          useCloud: settings.useCloud,
+          cloudUrl: settings.cloudUrl,
+          cloudKey: settings.cloudKey,
         );
   }
 
@@ -134,7 +137,7 @@ class _InterpretationScreenState extends State<InterpretationScreen> {
                           const SizedBox(width: 6),
                           Text(
                             dream.interpretedByAi
-                                ? 'Diễn giải bởi AI (Ollama)'
+                                ? 'Diễn giải bởi AI'
                                 : 'Diễn giải offline (từ điển biểu tượng)',
                             style: Theme.of(context).textTheme.bodySmall,
                           ),

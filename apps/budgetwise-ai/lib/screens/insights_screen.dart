@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/settings_provider.dart';
 import '../providers/transaction_provider.dart';
+import '../services/cloud_ai_service.dart';
 import '../services/offline_insights.dart';
 import '../services/ollama_service.dart';
 import '../widgets/empty_state.dart';
@@ -47,7 +48,14 @@ class _InsightsScreenState extends State<InsightsScreen> {
     );
 
     String? result;
-    if (settings.ollamaEnabled) {
+    if (settings.useCloud && settings.cloudUrl.isNotEmpty) {
+      final cloud = CloudAiService(
+        baseUrl: settings.cloudUrl,
+        proxyKey: settings.cloudKey,
+      );
+      result = await cloud.generate(OllamaService.buildPrompt(summary));
+    }
+    if (result == null && settings.ollamaEnabled) {
       final service = OllamaService(
         baseUrl: settings.ollamaHost,
         model: settings.ollamaModel,
@@ -66,9 +74,9 @@ class _InsightsScreenState extends State<InsightsScreen> {
         _aiResult = result;
       } else {
         _aiError =
-            'Không kết nối được Ollama (chưa bật `ollama serve` hoặc chưa cấu '
-                'hình đúng ở Cài đặt). Đây vẫn là những gợi ý cơ bản dựa trên '
-                'số liệu chi tiêu của bạn phía dưới.';
+            'Không kết nối được AI (Cloud lẫn Ollama đều không phản hồi). '
+                'Kiểm tra lại cấu hình ở Cài đặt. Đây vẫn là những gợi ý cơ '
+                'bản dựa trên số liệu chi tiêu của bạn phía dưới.';
       }
     });
   }

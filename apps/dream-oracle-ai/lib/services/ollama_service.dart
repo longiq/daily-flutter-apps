@@ -21,10 +21,8 @@ class OllamaService {
     this.model = 'llama3.2',
   });
 
-  /// Trả về text diễn giải hoặc null nếu gọi thất bại.
-  Future<String?> interpretDream(String dreamContent) async {
-    try {
-      final prompt = '''
+  /// Prompt diễn giải giấc mơ dùng chung cho OllamaService và CloudAiService.
+  static String buildPrompt(String dreamContent) => '''
 Bạn là một người diễn giải giấc mơ giàu kinh nghiệm, nói tiếng Việt, giọng
 điệu ấm áp và gợi mở (không phán xét, không khẳng định tuyệt đối).
 Hãy đọc giấc mơ dưới đây và:
@@ -37,6 +35,11 @@ Trả lời bằng tiếng Việt, súc tích, dưới 200 từ, không dùng ma
 Giấc mơ:
 $dreamContent
 ''';
+
+  /// Trả về text diễn giải hoặc null nếu gọi thất bại.
+  Future<String?> interpretDream(String dreamContent) async {
+    try {
+      final prompt = buildPrompt(dreamContent);
 
       final res = await http
           .post(

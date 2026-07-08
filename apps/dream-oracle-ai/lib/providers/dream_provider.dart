@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import '../data/symbol_dictionary_data.dart';
 import '../models/dream_entry.dart';
+import '../services/cloud_ai_service.dart';
 import '../services/dream_repository.dart';
 import '../services/offline_interpreter.dart';
 import '../services/ollama_service.dart';
@@ -74,13 +75,16 @@ class DreamProvider extends ChangeNotifier {
     await _repo.saveAll(_dreams);
   }
 
-  /// Diễn giải giấc mơ [id]. Thử Ollama trước (trừ khi [forceOffline]),
-  /// nếu thất bại/tắt thì fallback sang từ điển biểu tượng offline.
+  /// Diễn giải giấc mơ [id]. Thử Cloud AI (proxy) trước, rồi Ollama, rồi
+  /// (trừ khi [forceOffline]) fallback sang từ điển biểu tượng offline.
   Future<void> interpret(
     String id, {
     required String host,
     required String model,
     required bool forceOffline,
+    bool useCloud = false,
+    String cloudUrl = '',
+    String cloudKey = '',
   }) async {
     final dream = findById(id);
     if (dream == null) return;
@@ -90,8 +94,14 @@ class DreamProvider extends ChangeNotifier {
 
     String? aiText;
     if (!forceOffline) {
-      final ollama = OllamaService(baseUrl: host, model: model);
-      aiText = await ollama.interpretDream(dream.content);
+      if (useCloud && cloudUrl.isNotEmpty) {
+        final cloud = CloudAiService(baseUrl: cloudUrl, proxyKey: cloudKey);
+        aiText = await cloud.generate(OllamaService.buildPrompt(dream.content));
+      }
+      if (aiText == null) {
+        final ollama = OllamaService(baseUrl: host, model: model);
+        aiText = await ollama.interpretDream(dream.content);
+      }
     }
 
     String finalText;
