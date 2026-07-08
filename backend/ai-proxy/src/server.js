@@ -99,6 +99,12 @@ app.post('/api/generate', checkProxySecret, generateLimiter, async (req, res) =>
           temperature: typeof temperature === 'number' ? temperature : 0.7,
           maxOutputTokens:
             typeof maxOutputTokens === 'number' ? maxOutputTokens : 800,
+          // Gemini 2.5 Flash mặc định trích một phần maxOutputTokens cho
+          // "thinking" (suy luận nội bộ, không hiển thị) trước khi sinh text
+          // — với các tác vụ sinh text đơn giản (diễn giải, tóm tắt, tạo
+          // thẻ...) việc này dễ ăn hết ngân sách token và cắt cụt câu trả
+          // lời giữa chừng. Tắt hẳn vì không cần chain-of-thought ở đây.
+          thinkingConfig: { thinkingBudget: 0 },
         },
       }),
     });
