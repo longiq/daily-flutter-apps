@@ -98,7 +98,7 @@ app.post('/api/generate', checkProxySecret, generateLimiter, async (req, res) =>
         generationConfig: {
           temperature: typeof temperature === 'number' ? temperature : 0.7,
           maxOutputTokens:
-            typeof maxOutputTokens === 'number' ? maxOutputTokens : 800,
+            typeof maxOutputTokens === 'number' ? maxOutputTokens : 4096,
           // Gemini 2.5 Flash mặc định trích một phần maxOutputTokens cho
           // "thinking" (suy luận nội bộ, không hiển thị) trước khi sinh text
           // — với các tác vụ sinh text đơn giản (diễn giải, tóm tắt, tạo

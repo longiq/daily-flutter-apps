@@ -38,7 +38,7 @@ class CloudAiService {
   Future<String?> generate(
     String prompt, {
     double temperature = 0.7,
-    int maxOutputTokens = 800,
+    int maxOutputTokens = 4096,
   }) async {
     try {
       final res = await http
